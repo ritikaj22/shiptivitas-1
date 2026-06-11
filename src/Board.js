@@ -47,9 +47,76 @@ export default class Board extends React.Component {
       id: companyDetails[0],
       name: companyDetails[1],
       description: companyDetails[2],
-      status: companyDetails[3],
+      status: 'backlog',
     }));
   }
+  componentDidMount() {
+  Dragula([
+    this.swimlanes.backlog.current,
+    this.swimlanes.inProgress.current,
+    this.swimlanes.complete.current
+  ]).on('drop', (el, target) => {
+
+  const id = el.dataset.id;
+
+  const allClients = [
+    ...this.state.clients.backlog,
+    ...this.state.clients.inProgress,
+    ...this.state.clients.complete
+  ];
+
+  const movedClient = allClients.find(
+    client => client.id === id
+  );
+
+  let status = 'backlog';
+
+  if (target === this.swimlanes.inProgress.current) {
+    status = 'in-progress';
+  }
+
+  if (target === this.swimlanes.complete.current) {
+    status = 'complete';
+  }
+
+  movedClient.status = status;
+
+  const backlog = [];
+  const inProgress = [];
+  const complete = [];
+
+  Array.from(this.swimlanes.backlog.current.children)
+    .forEach(node => {
+      const client = allClients.find(
+        c => c.id === node.dataset.id
+      );
+      if (client) backlog.push(client);
+    });
+
+  Array.from(this.swimlanes.inProgress.current.children)
+    .forEach(node => {
+      const client = allClients.find(
+        c => c.id === node.dataset.id
+      );
+      if (client) inProgress.push(client);
+    });
+
+  Array.from(this.swimlanes.complete.current.children)
+    .forEach(node => {
+      const client = allClients.find(
+        c => c.id === node.dataset.id
+      );
+      if (client) complete.push(client);
+    });
+
+  this.setState({
+    clients: {
+      backlog,
+      inProgress,
+      complete
+    }
+  });
+});
   renderSwimlane(name, clients, ref) {
     return (
       <Swimlane name={name} clients={clients} dragulaRef={ref}/>
